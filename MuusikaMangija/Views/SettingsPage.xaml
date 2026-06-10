@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MuusikaMangija.ViewModels"
+             xmlns:helpers="clr-namespace:MuusikaMangija.Services"
+             x:Class="MuusikaMangija.Views.SettingsPage"
+             Title="Seaded / Settings">
+
+    <ContentPage.BindingContext>
+        <vm:SettingsViewModel />
+    </ContentPage.BindingContext>
+
+    <VerticalStackLayout Padding="20" Spacing="25">
+
+        <!-- THEME SELECTION SECTION -->
+        <VerticalStackLayout Spacing="5">
+            <Label Text="{Binding [ThemeTitle], Source={x:Static helpers:LocalizationManager.Instance}}" 
+                   FontAttributes="Bold" FontSize="18"/>
+            <HorizontalStackLayout Spacing="10" Margin="0,5">
+                <Button Text="Light" Command="{Binding ChangeThemeCommand}" CommandParameter="Light" WidthRequest="100"/>
+                <Button Text="Dark" Command="{Binding ChangeThemeCommand}" CommandParameter="Dark" WidthRequest="100"/>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <BoxView HeightRequest="1" BackgroundColor="LightGray" HorizontalOptions="Fill" />
+
+        <!-- LANGUAGE SELECTION SECTION -->
+        <VerticalStackLayout Spacing="5">
+            <Label Text="{Binding [LanguageTitle], Source={x:Static helpers:LocalizationManager.Instance}}" 
+                   FontAttributes="Bold" FontSize="18"/>
+            <HorizontalStackLayout Spacing="10" Margin="0,5">
+                <Button Text="Eesti" Command="{Binding ChangeLanguageCommand}" CommandParameter="et" WidthRequest="100"/>
+                <Button Text="English" Command="{Binding ChangeLanguageCommand}" CommandParameter="en" WidthRequest="100"/>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <BoxView HeightRequest="1" BackgroundColor="LightGray" HorizontalOptions="Fill" />
+
+        <!-- APP INFORMATION -->
+        <Label Text="{Binding [AppInfo], Source={x:Static helpers:LocalizationManager.Instance}}" 
+               TextColor="Gray" FontSize="14" HorizontalOptions="Center" Margin="0,20,0,0"/>
+
+    </VerticalStackLayout>
+</ContentPage>

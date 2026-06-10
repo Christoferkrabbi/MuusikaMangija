@@ -1,0 +1,79 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MuusikaMangija.ViewModels"
+             xmlns:models="clr-namespace:MuusikaMangija.Models"
+             x:Name="RootPage"
+             x:Class="MuusikaMangija.Views.AudioPlayerPage"
+             Title="Muusikamängija">
+
+    <Grid RowDefinitions="*, *, Auto" Padding="20" RowSpacing="15">
+
+        <!-- 1. OSA: Kõik laulud (Lohistatavad elemendid) -->
+        <VerticalStackLayout Grid.Row="0" Spacing="5">
+            <Label Text="Kõik lood (Lohista lugu järjekorda või puuduta mängimiseks)" FontAttributes="Bold" Margin="0,0,0,5"/>
+            <CollectionView ItemsSource="{Binding AllSongs}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Song">
+                        <Border Padding="10" Margin="0,3" StrokeShape="RoundRectangle 5">
+                            <Border.GestureRecognizers>
+                                <!-- Drag funktsioon -->
+                                <DragGestureRecognizer 
+                                    CanDrag="True" 
+                                    DragStartingCommand="{Binding Source={x:Reference RootPage}, Path=BindingContext.DragStartingCommand}"
+                                    DragStartingCommandParameter="{Binding .}"/>
+                                <!-- Tap funktsioon otse mängimiseks -->
+                                <TapGestureRecognizer 
+                                    Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.PlaySongCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="🎵" VerticalOptions="Center"/>
+                                <VerticalStackLayout>
+                                    <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="15"/>
+                                    <Label Text="{Binding Artist}" FontSize="12" TextColor="Gray"/>
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+
+        <!-- 2. OSA: Mängujärjekord (Drop sihtkoht) -->
+        <Border Grid.Row="1" StrokeThickness="2" StrokeDashArray="4,2" StrokeShape="RoundRectangle 10">
+            <Border.GestureRecognizers>
+                <DropGestureRecognizer AllowDrop="True" DropCommand="{Binding Source={x:Reference RootPage}, Path=BindingContext.DropCommand}"/>
+            </Border.GestureRecognizers>
+
+            <Grid RowDefinitions="Auto, *">
+                <Label Grid.Row="0" Text="Mängujärjekord (Lohista lood siia)" HorizontalOptions="Center" Margin="10" TextColor="DimGray"/>
+                <CollectionView Grid.Row="1" ItemsSource="{Binding PlaybackQueue}" Margin="10">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Song">
+                            <Label Text="{Binding Title}" Margin="5" FontAttributes="Italic"/>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </Border>
+
+        <!-- 3. OSA: Alumine juhtpaneel (Pleier) -->
+        <Border Grid.Row="2" Padding="15" StrokeShape="RoundRectangle 15" BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#202020}">
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="20">
+                <VerticalStackLayout VerticalOptions="Center" WidthRequest="150">
+                    <Label Text="{Binding CurrentSong.Title, TargetNullValue='Pole valitud'}" FontAttributes="Bold" LineBreakMode="TailTruncation"/>
+                    <Label Text="{Binding CurrentSong.Artist, TargetNullValue='-'}" FontSize="12" TextColor="Gray"/>
+                </VerticalStackLayout>
+                <!-- Dünaamiline tekstiga nupp vastavalt staatusele -->
+                <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseConverter}}" 
+                        Command="{Binding PlayPauseCommand}"
+                        WidthRequest="80"
+                        HeightRequest="45"/>
+
+                <!-- (MediaElement removed) Use Plugin.Maui.Audio or MediaElement package to add in-app playback. -->
+            </HorizontalStackLayout>
+        </Border>
+
+    </Grid>
+</ContentPage>
