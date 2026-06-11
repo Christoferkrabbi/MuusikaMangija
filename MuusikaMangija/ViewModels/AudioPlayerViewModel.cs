@@ -162,72 +162,40 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 
 		try
 		{
-			// 1. Get raw file paths from your updated direct folder scanner
-			var scannedFiles = await _audioScanner.ScanAsync();
-			if (scannedFiles == null || scannedFiles.Count == 0)
+			// 1. Receive the tuple data containing both Path and Title
+			var files = await _audioScanner.ScanAsync();
+			if (files == null || files.Count == 0)
 			{
 				StatusMessage = "Ühtegi laulu ei leitud.";
 				return;
 			}
 
-			// 2. Set up the secure local application sandbox directory path
-			string userMusicFolder = Path.Combine(FileSystem.AppDataDirectory, "UserMusic");
-			if (!Directory.Exists(userMusicFolder))
+			var existing = await _databaseService.GetSongsAsync();
+			int addedCount = 0;
+
+			// 2. Loop through the paired data structures
+			foreach (var item in files)
 			{
-				Directory.CreateDirectory(userMusicFolder);
+				// Skip if this exact URI path is already stored in the DB
+				if (existing.Exists(s => s.FileName == item.Path))
+					continue;
+
+				// 💡 Use the true media title fetched from the Android MediaStore query block
+				var song = new Song
+				{
+					Title = string.IsNullOrWhiteSpace(item.Title) ? "Tundmatu lugu" : item.Title,
+					Artist = "Unknown",
+					FileName = item.Path, // Playable content:// path string
+					IsFavorite = false,
+					IsHidden = false
+				};
+
+				await _databaseService.SaveSongAsync(song);
+				addedCount++;
 			}
 
-			var existingSongsInDb = await _databaseService.GetSongsAsync();
-			int successfullyAddedCount = 0;
-
-			foreach (var rawPath in scannedFiles)
-			{
-				try
-				{
-					// Get the clean actual file name (e.g., "song.mp3") instead of code identifiers
-					string actualFileName = Path.GetFileName(rawPath);
-					if (string.IsNullOrWhiteSpace(actualFileName)) continue;
-
-					// Define the destination path inside your app's isolated container
-					string localDestinationPath = Path.Combine(userMusicFolder, actualFileName);
-
-					// Skip if this file has already been scanned and processed into the DB/sandbox
-					if (existingSongsInDb.Exists(s => s.FileName == localDestinationPath))
-						continue;
-
-					// 3. CRITICAL: Open a secure system stream to copy the protected storage file
-					// into your local sandbox so the Audio Player has permission to play it!
-					using (var sourceStream = File.OpenRead(rawPath))
-					using (var targetStream = File.Create(localDestinationPath))
-					{
-						await sourceStream.CopyToAsync(targetStream);
-					}
-
-					// Get a clean song title without the ".mp3" extension text
-					string cleanTitle = Path.GetFileNameWithoutExtension(actualFileName);
-
-					var song = new Song
-					{
-						Title = string.IsNullOrWhiteSpace(cleanTitle) ? "Tundmatu lugu" : cleanTitle,
-						Artist = "Unknown",
-						FileName = localDestinationPath, // Points to the playable sandbox file path
-						IsFavorite = false,
-						IsHidden = false
-					};
-
-					await _databaseService.SaveSongAsync(song);
-					successfullyAddedCount++;
-				}
-				catch (Exception fileEx)
-				{
-					// If one specific file fails due to system locks, skip it and continue scanning others
-					System.Diagnostics.Debug.WriteLine($"Skipping individual file error: {fileEx.Message}");
-				}
-			}
-
-			// 4. Refresh your list view UI collections
 			await LoadMusicLibraryAsync();
-			StatusMessage = $"Skaneerimine lõpetatud! Lisati {successfullyAddedCount} uut laulu.";
+			StatusMessage = $"Skaneerimine lõpetatud! Lisati {addedCount} uut laulu.";
 		}
 		catch (Exception ex)
 		{
@@ -240,6 +208,8 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 			IsBusy = false;
 		}
 	}
+
+
 
 
 	private async Task PickFileAsync()

@@ -9,15 +9,19 @@ namespace MuusikaMangija.Services
 {
 	public class AndroidAudioScanner : IAudioScanner
 	{
-		public Task<List<string>> ScanAsync()
+		public Task<List<(string Path, string Title)>> ScanAsync()
 		{
-			var list = new List<string>();
+			var list = new List<(string Path, string Title)>();
 			try
 			{
 				var uri = MediaStore.Audio.Media.ExternalContentUri;
 
-				// Query the ID instead of the raw file Path string to stop Android 11 crashes
-				string[] projection = new[] { MediaStore.Audio.AudioColumns.Id };
+				// 💡 Query BOTH the ID and the real Media Title string from the phone
+				string[] projection = new[]
+				{
+					MediaStore.Audio.AudioColumns.Id,
+					MediaStore.Audio.AudioColumns.Title
+				};
 
 				var resolver = Android.App.Application.Context.ContentResolver;
 				using (ICursor cursor = resolver.Query(uri, projection, null, null, null))
@@ -25,15 +29,21 @@ namespace MuusikaMangija.Services
 					if (cursor != null)
 					{
 						int idIndex = cursor.GetColumnIndexOrThrow(MediaStore.Audio.AudioColumns.Id);
+						int titleIndex = cursor.GetColumnIndexOrThrow(MediaStore.Audio.AudioColumns.Title);
+
 						while (cursor.MoveToNext())
 						{
 							long id = cursor.GetLong(idIndex);
+							string realTitle = cursor.GetString(titleIndex);
 
-							// Generate a standard playable Android Content URI string
+							// Generate the valid content URI string
 							var contentUri = ContentUris.WithAppendedId(MediaStore.Audio.Media.ExternalContentUri, id);
 
-							if (contentUri != null)
-								list.Add(contentUri.ToString());
+							if (contentUri != null && !string.IsNullOrWhiteSpace(realTitle))
+							{
+								// Return the playable URI path paired with its real metadata title
+								list.Add((contentUri.ToString(), realTitle));
+							}
 						}
 					}
 				}

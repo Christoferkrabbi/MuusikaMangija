@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MuusikaMangija.Services;
-
-public interface IAudioScanner
+namespace MuusikaMangija.Services
 {
-    // Returns full file paths of audio files found on the device
-    Task<List<string>> ScanAsync();
+	public interface IAudioScanner
+	{
+		Task<List<(string Path, string Title)>> ScanAsync();
+	}
 }
+
