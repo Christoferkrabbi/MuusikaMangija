@@ -9,18 +9,41 @@
     <Grid RowDefinitions="*, *, Auto" Padding="20" RowSpacing="15">
 
         <!-- 1. OSA: Kõik laulud (Lohistatavad elemendid) -->
-        <VerticalStackLayout Grid.Row="0" Spacing="5">
-            <Label Text="Kõik lood (Lohista lugu järjekorda või puuduta mängimiseks)" FontAttributes="Bold" Margin="0,0,0,5"/>
-            <CollectionView ItemsSource="{Binding AllSongs}">
+        <Grid Grid.Row="0" RowDefinitions="Auto, Auto, *">
+
+            <!-- Title Header -->
+            <Label Grid.Row="0" 
+                   Text="Kõik lood (Lohista lugu järjekorda või puuduta mängimiseks)" 
+                   FontAttributes="Bold" 
+                   Margin="0,0,0,5" />
+
+            <!-- Action Control Buttons grouped horizontally -->
+            <HorizontalStackLayout Grid.Row="1" Spacing="10" Margin="0,0,0,10">
+                <Button Text="Scan Device" 
+                        Clicked="OnScanClicked" 
+                        WidthRequest="120" />
+
+                <Button Text="Hidden" Clicked="OnHiddenClicked" WidthRequest="90" />
+
+                <Button Text="Choose File Manually" 
+                        Command="{Binding PickFileCommand}">
+                    <!-- Disable button cleanly while scanning using a DataTrigger -->
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsBusy}" Value="True">
+                            <Setter Property="IsEnabled" Value="False" />
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+            </HorizontalStackLayout>
+
+            <!-- Songs Collection View -->
+            <CollectionView Grid.Row="2" ItemsSource="{Binding AllSongs}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:Song">
                         <Border Padding="10" Margin="0,3" StrokeShape="RoundRectangle 5">
                             <Border.GestureRecognizers>
                                 <!-- Drag funktsioon -->
-                                <DragGestureRecognizer 
-                                    CanDrag="True" 
-                                    DragStartingCommand="{Binding Source={x:Reference RootPage}, Path=BindingContext.DragStartingCommand}"
-                                    DragStartingCommandParameter="{Binding .}"/>
+                                <DragGestureRecognizer CanDrag="True" DragStarting="OnDragStarting" />
                                 <!-- Tap funktsioon otse mängimiseks -->
                                 <TapGestureRecognizer 
                                     Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.PlaySongCommand}"
@@ -29,21 +52,25 @@
 
                             <HorizontalStackLayout Spacing="10">
                                 <Label Text="🎵" VerticalOptions="Center"/>
-                                <VerticalStackLayout>
-                                    <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="15"/>
+                                <VerticalStackLayout WidthRequest="150" HorizontalOptions="StartAndExpand">
+                                    <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="15" LineBreakMode="TailTruncation"/>
                                     <Label Text="{Binding Artist}" FontSize="12" TextColor="Gray"/>
                                 </VerticalStackLayout>
+                                <HorizontalStackLayout Spacing="5" VerticalOptions="Center">
+                                    <Button Text="Play" Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.PlaySongCommand}" CommandParameter="{Binding .}" WidthRequest="60" />
+                                    <Button Text="Hide" Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.HideSongCommand}" CommandParameter="{Binding .}" WidthRequest="60" />
+                                </HorizontalStackLayout>
                             </HorizontalStackLayout>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-        </VerticalStackLayout>
+        </Grid>
 
         <!-- 2. OSA: Mängujärjekord (Drop sihtkoht) -->
         <Border Grid.Row="1" StrokeThickness="2" StrokeDashArray="4,2" StrokeShape="RoundRectangle 10">
             <Border.GestureRecognizers>
-                <DropGestureRecognizer AllowDrop="True" DropCommand="{Binding Source={x:Reference RootPage}, Path=BindingContext.DropCommand}"/>
+                <DropGestureRecognizer AllowDrop="True" Drop="OnDrop" />
             </Border.GestureRecognizers>
 
             <Grid RowDefinitions="Auto, *">
@@ -60,20 +87,41 @@
 
         <!-- 3. OSA: Alumine juhtpaneel (Pleier) -->
         <Border Grid.Row="2" Padding="15" StrokeShape="RoundRectangle 15" BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#202020}">
-            <HorizontalStackLayout HorizontalOptions="Center" Spacing="20">
-                <VerticalStackLayout VerticalOptions="Center" WidthRequest="150">
-                    <Label Text="{Binding CurrentSong.Title, TargetNullValue='Pole valitud'}" FontAttributes="Bold" LineBreakMode="TailTruncation"/>
-                    <Label Text="{Binding CurrentSong.Artist, TargetNullValue='-'}" FontSize="12" TextColor="Gray"/>
-                </VerticalStackLayout>
-                <!-- Dünaamiline tekstiga nupp vastavalt staatusele -->
-                <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseConverter}}" 
-                        Command="{Binding PlayPauseCommand}"
-                        WidthRequest="80"
-                        HeightRequest="45"/>
+            <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
 
-                <!-- (MediaElement removed) Use Plugin.Maui.Audio or MediaElement package to add in-app playback. -->
-            </HorizontalStackLayout>
+                <HorizontalStackLayout Grid.Row="0" Grid.Column="0" HorizontalOptions="Start" Spacing="20">
+                    <VerticalStackLayout VerticalOptions="Center" WidthRequest="150">
+                        <Label Text="{Binding CurrentSong.Title, TargetNullValue='Pole valitud'}" FontAttributes="Bold" LineBreakMode="TailTruncation"/>
+                        <Label Text="{Binding CurrentSong.Artist, TargetNullValue='-'}" FontSize="12" TextColor="Gray"/>
+                    </VerticalStackLayout>
+                    <Button Text="{Binding IsPlaying, Converter={StaticResource PlayPauseConverter}}" 
+                            Command="{Binding PlayPauseCommand}"
+                            WidthRequest="80"
+                            HeightRequest="45"/>
+                </HorizontalStackLayout>
+
+                <!-- 💡 Real-time Status Message Bar added here -->
+                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                       Text="{Binding StatusMessage}"
+                       TextColor="DimGray"
+                       FontSize="12"
+                       FontAttributes="Italic"
+                       Margin="0,5,0,0"
+                       HorizontalOptions="Center" />
+            </Grid>
         </Border>
+
+        <!-- 🔄 Global Loading Overlay Panel (Visible only when IsBusy is true) -->
+        <Grid Grid.Row="0" Grid.RowSpan="3"
+              BackgroundColor="#CC000000"
+              IsVisible="{Binding IsBusy}"
+              HorizontalOptions="Fill"
+              VerticalOptions="Fill">
+            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="15">
+                <ActivityIndicator IsRunning="{Binding IsBusy}" Color="White" HeightRequest="50" WidthRequest="50" />
+                <Label Text="{Binding StatusMessage}" TextColor="White" FontSize="16" HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+        </Grid>
 
     </Grid>
 </ContentPage>

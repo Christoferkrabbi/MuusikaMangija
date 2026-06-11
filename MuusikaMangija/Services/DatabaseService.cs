@@ -65,4 +65,10 @@ public class DatabaseService
 		await InitAsync();
 		return await _database.DeleteAsync(song);
 	}
+
+	public async Task<List<Song>> GetHiddenSongsAsync()
+	{
+		await InitAsync();
+		return await _database.Table<Song>().Where(s => s.IsHidden == true).ToListAsync();
+	}
 }
