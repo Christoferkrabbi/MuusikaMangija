@@ -9,18 +9,19 @@ namespace MuusikaMangija.Services
 {
 	public class AndroidAudioScanner : IAudioScanner
 	{
-		public Task<List<(string Path, string Title)>> ScanAsync()
+      public Task<List<(string Path, string Title, string Artist)>> ScanAsync()
 		{
-			var list = new List<(string Path, string Title)>();
+         var list = new List<(string Path, string Title, string Artist)>();
 			try
 			{
 				var uri = MediaStore.Audio.Media.ExternalContentUri;
 
 				// 💡 Query BOTH the ID and the real Media Title string from the phone
-				string[] projection = new[]
+                 string[] projection = new[]
 				{
 					MediaStore.Audio.AudioColumns.Id,
-					MediaStore.Audio.AudioColumns.Title
+                     MediaStore.Audio.AudioColumns.Title,
+						MediaStore.Audio.AudioColumns.Artist
 				};
 
 				var resolver = Android.App.Application.Context.ContentResolver;
@@ -28,22 +29,25 @@ namespace MuusikaMangija.Services
 				{
 					if (cursor != null)
 					{
-						int idIndex = cursor.GetColumnIndexOrThrow(MediaStore.Audio.AudioColumns.Id);
+                       int idIndex = cursor.GetColumnIndexOrThrow(MediaStore.Audio.AudioColumns.Id);
 						int titleIndex = cursor.GetColumnIndexOrThrow(MediaStore.Audio.AudioColumns.Title);
+						int artistIndex = cursor.GetColumnIndexOrThrow(MediaStore.Audio.AudioColumns.Artist);
 
 						while (cursor.MoveToNext())
 						{
 							long id = cursor.GetLong(idIndex);
-							string realTitle = cursor.GetString(titleIndex);
+                            string realTitle = cursor.GetString(titleIndex);
+							string artist = string.Empty;
+							try { artist = cursor.GetString(artistIndex); } catch { artist = ""; }
 
 							// Generate the valid content URI string
 							var contentUri = ContentUris.WithAppendedId(MediaStore.Audio.Media.ExternalContentUri, id);
 
-							if (contentUri != null && !string.IsNullOrWhiteSpace(realTitle))
-							{
-								// Return the playable URI path paired with its real metadata title
-								list.Add((contentUri.ToString(), realTitle));
-							}
+                            if (contentUri != null && !string.IsNullOrWhiteSpace(realTitle))
+						{
+							// Return the playable URI path paired with its real metadata title and artist
+							list.Add((contentUri.ToString(), realTitle, artist ?? string.Empty));
+						}
 						}
 					}
 				}

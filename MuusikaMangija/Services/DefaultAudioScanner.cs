@@ -8,10 +8,10 @@ namespace MuusikaMangija.Services;
 // Cross-platform fallback scanner that looks in AppData/UserMusic
 public class DefaultAudioScanner : IAudioScanner
 {
-	public Task<List<(string Path, string Title)>> ScanAsync()
+    public Task<List<(string Path, string Title, string Artist)>> ScanAsync()
 	{
-		// 💡 Update collection to use the tuple structure matching your new interface
-		var list = new List<(string Path, string Title)>();
+        // 💡 Update collection to use the tuple structure matching your new interface
+		var list = new List<(string Path, string Title, string Artist)>();
 
 		var userFolder = Path.Combine(FileSystem.AppDataDirectory, "UserMusic");
 		if (!Directory.Exists(userFolder))
@@ -21,14 +21,25 @@ public class DefaultAudioScanner : IAudioScanner
 
 		foreach (var file in files)
 		{
-			// Extract a clean song title from the file name text on disk
+           // Extract a clean song title from the file name text on disk
 			string cleanTitle = Path.GetFileNameWithoutExtension(file);
+			string artist = "Unknown";
 
 			if (string.IsNullOrWhiteSpace(cleanTitle))
 				cleanTitle = "Tundmatu lugu";
 
-			// Add both the file path and its clean title name to our list
-			list.Add((file, cleanTitle));
+			// Optionally split title like "Artist - Title"
+			if (cleanTitle.Contains(" - "))
+			{
+				var parts = cleanTitle.Split(new[] { " - " }, 2, System.StringSplitOptions.None);
+				if (parts.Length == 2)
+				{
+					artist = parts[0].Trim();
+					cleanTitle = parts[1].Trim();
+				}
+			}
+
+			list.Add((file, cleanTitle, artist));
 		}
 
 		return Task.FromResult(list);

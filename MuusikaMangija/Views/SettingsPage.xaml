@@ -6,6 +6,10 @@
              x:Class="MuusikaMangija.Views.SettingsPage"
              Title="Seaded / Settings">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="⋮" Priority="0" Order="Primary" Clicked="OnToolbarMenuClicked"/>
+    </ContentPage.ToolbarItems>
+
     <ContentPage.BindingContext>
         <vm:SettingsViewModel />
     </ContentPage.BindingContext>
@@ -29,8 +33,9 @@
             <Label Text="{Binding [LanguageTitle], Source={x:Static helpers:LocalizationManager.Instance}}" 
                    FontAttributes="Bold" FontSize="18"/>
             <HorizontalStackLayout Spacing="10" Margin="0,5">
-                <Button Text="Eesti" Command="{Binding ChangeLanguageCommand}" CommandParameter="et" WidthRequest="100"/>
-                <Button Text="English" Command="{Binding ChangeLanguageCommand}" CommandParameter="en" WidthRequest="100"/>
+                <Button Text="{Binding [Language_Estonian], Source={x:Static helpers:LocalizationManager.Instance}}" Command="{Binding ChangeLanguageCommand}" CommandParameter="et" WidthRequest="100"/>
+                <Button Text="{Binding [Language_English], Source={x:Static helpers:LocalizationManager.Instance}}" Command="{Binding ChangeLanguageCommand}" CommandParameter="en" WidthRequest="100"/>
+                <Button Text="{Binding [Language_Russian], Source={x:Static helpers:LocalizationManager.Instance}}" Command="{Binding ChangeLanguageCommand}" CommandParameter="ru" WidthRequest="100"/>
             </HorizontalStackLayout>
         </VerticalStackLayout>
 

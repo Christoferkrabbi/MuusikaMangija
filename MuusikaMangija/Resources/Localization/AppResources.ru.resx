@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -118,78 +118,80 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ThemeTitle" xml:space="preserve">
-    <value>theme</value>
+    <value>Teema</value>
   </data>
   <data name="LanguageTitle" xml:space="preserve">
-    <value>Language</value>
+    <value>Keel</value>
   </data>
   <data name="AppInfo" xml:space="preserve">
-    <value>App info</value>
+    <value>Rakenduse teave</value>
   </data>
   <data name="Menu_Add" xml:space="preserve">
-    <value>add</value>
+    <value>Добавить</value>
   </data>
   <data name="Menu_AddPlay" xml:space="preserve">
-    <value>add &amp; play</value>
+    <value>Добавить и воспроизвести</value>
   </data>
   <data name="Menu_Hide" xml:space="preserve">
-    <value>hide</value>
+    <value>Скрыть</value>
   </data>
   <data name="Button_ClearQueue" xml:space="preserve">
-    <value>Clear</value>
+    <value>Очистить</value>
   </data>
   <data name="Action_Cancel" xml:space="preserve">
-    <value>Cancel</value>
+    <value>Отмена</value>
   </data>
   <data name="Play" xml:space="preserve">
-    <value>Play</value>
+    <value>Воспроизвести</value>
   </data>
   <data name="Pause" xml:space="preserve">
-    <value>Pause</value>
+    <value>Пауза</value>
   </data>
   <data name="NextSongLabel" xml:space="preserve">
-    <value>Next song: {0}</value>
+    <value>Следующая песня: {0}</value>
   </data>
   <data name="ScanDevice" xml:space="preserve">
-    <value>Scan Device</value>
+    <value>Сканировать устройство</value>
   </data>
   <data name="Hidden" xml:space="preserve">
-    <value>Hidden</value>
+    <value>Скрытые</value>
   </data>
   <data name="ChooseFileManually" xml:space="preserve">
-    <value>Choose File Manually</value>
+    <value>Выбрать файл вручную</value>
   </data>
   <data name="Language_Estonian" xml:space="preserve">
-    <value>Estonian</value>
+    <value>Эстонский</value>
   </data>
   <data name="Language_English" xml:space="preserve">
     <value>English</value>
   </data>
   <data name="Language_Russian" xml:space="preserve">
-    <value>Russian</value>
+    <value>Русский</value>
   </data>
   <data name="SongNext" xml:space="preserve">
-    <value>Next</value>
+    <value>
+следующий</value>
   </data>
   <data name="SongPrevious" xml:space="preserve">
-    <value>Previous</value>
+    <value>
+Предыдущий</value>
   </data>
   <data name="Edit" xml:space="preserve">
-    <value>Edit</value>
+    <value>Редактировать</value>
   </data>
   <data name="ResetSettings" xml:space="preserve">
-    <value>Reset</value>
+    <value>Сбросить</value>
   </data>
   <data name="ConfirmReset" xml:space="preserve">
-    <value>Reset all settings?</value>
+    <value>Сбросить все настройки?</value>
   </data>
   <data name="SettingsResetDone" xml:space="preserve">
-    <value>Settings reset.</value>
+    <value>Настройки сброшены.</value>
   </data>
   <data name="Yes" xml:space="preserve">
-    <value>Yes</value>
+    <value>Да</value>
   </data>
   <data name="No" xml:space="preserve">
-    <value>No</value>
+    <value>Нет</value>
   </data>
 </root>

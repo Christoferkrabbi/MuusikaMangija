@@ -71,6 +71,7 @@
      <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<!-- Audio playback plugin -->
 		<PackageReference Include="Plugin.Maui.Audio" Version="1.0.0" />
+		<PackageReference Include="TagLibSharp" Version="2.3.0" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -15,7 +15,7 @@
                     <Grid ColumnDefinitions="*, Auto, Auto" Padding="5">
                         <Label Text="{Binding Title}" Grid.Column="0" />
                         <Button Text="Unhide" Grid.Column="1" Command="{Binding Source={x:Reference HiddenPage}, Path=BindingContext.UnhideCommand}" CommandParameter="{Binding .}" />
-                        <Button Text="Delete" Grid.Column="2" BackgroundColor="Red" TextColor="White" Command="{Binding Source={x:Reference HiddenPage}, Path=BindingContext.DeleteCommand}" CommandParameter="{Binding .}" />
+                        <Button Text="Delete" Grid.Column="2" BackgroundColor="Red" TextColor="White" Clicked="OnDeleteClicked" CommandParameter="{Binding .}" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

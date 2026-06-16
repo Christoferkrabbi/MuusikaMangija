@@ -10,6 +10,7 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
 using MuusikaMangija.Models;
 using MuusikaMangija.Services;
+using System.Collections.Specialized;
 
 namespace MuusikaMangija.ViewModels;
 
@@ -27,7 +28,41 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 
 	public ObservableCollection<Song> AllSongs { get; } = new();
 	public ObservableCollection<Song> PlaybackQueue { get; } = new();
+	private int _currentQueueIndex = -1;
 
+	private Song? _nextSong;
+public Song? NextSong
+{
+	get => _nextSong;
+	set
+	{
+		if (_nextSong == value) return;
+		_nextSong = value;
+		OnPropertyChanged(nameof(NextSong));
+	}
+}
+
+private void PlaybackQueue_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+{
+	UpdateNextSong();
+}
+
+private void UpdateNextSong()
+{
+	if (_currentQueueIndex >= 0 && _currentQueueIndex + 1 < PlaybackQueue.Count)
+	{
+		NextSong = PlaybackQueue[_currentQueueIndex + 1];
+	}
+	else if (PlaybackQueue.Count > 0)
+	{
+		// if nothing playing, next is first item
+		NextSong = PlaybackQueue[0];
+	}
+	else
+	{
+		NextSong = null;
+	}
+}
 	public Song? CurrentSong
 	{
 		get => _currentSong;
@@ -75,11 +110,16 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 
 	public ICommand PlayPauseCommand { get; }
 	public ICommand PlaySongCommand { get; }
+  public ICommand PlayPreviousCommand { get; }
+	public ICommand PlayNextCommand { get; }
 	public ICommand ToggleFavoriteCommand { get; }
 	public ICommand DragStartingCommand { get; }
 	public ICommand DropCommand { get; }
 	public ICommand ScanDeviceCommand { get; }
 	public ICommand HideSongCommand { get; }
+    public ICommand AddToQueueCommand { get; }
+	public ICommand RemoveFromQueueCommand { get; }
+	public ICommand ClearQueueCommand { get; }
 	public ICommand PickFileCommand { get; }
 
 	public event PropertyChangedEventHandler? PropertyChanged;
@@ -92,12 +132,59 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 
 		PlayPauseCommand = new Command(async () => await PlayPauseAsync());
 		PlaySongCommand = new Command<Song>(async (s) => await PlaySongAsync(s));
+       PlayPreviousCommand = new Command(async () => await PlayPreviousAsync());
+		PlayNextCommand = new Command(async () => await PlayNextAsync());
 		ToggleFavoriteCommand = new Command<Song>(async (s) => await ToggleFavoriteAsync(s));
 		DragStartingCommand = new Command<Song>(OnDragStarting);
 		DropCommand = new Command(async () => await OnDropAsync());
 		ScanDeviceCommand = new Command(async () => await ScanDeviceAsync());
 		HideSongCommand = new Command<Song>(async (s) => await HideSongAsync(s));
-		PickFileCommand = new Command(async () => await PickFileAsync());
+        PickFileCommand = new Command(async () => await PickFileAsync());
+		AddToQueueCommand = new Command<Song>(song =>
+		{
+			if (song == null) return;
+			if (!PlaybackQueue.Contains(song))
+				PlaybackQueue.Add(song);
+		});
+        RemoveFromQueueCommand = new Command<Song>(async (song) => await RemoveFromQueueAsync(song));
+		ClearQueueCommand = new Command(async () => await ClearQueueAsync());
+
+		// update next song when queue changes
+		PlaybackQueue.CollectionChanged += PlaybackQueue_CollectionChanged;
+
+		UpdateNextSong();
+
+		// subscribe to audio service playback end
+		_audioService.PlaybackEnded += AudioService_PlaybackEnded;
+	}
+
+	private void AudioService_PlaybackEnded(object? sender, EventArgs e)
+	{
+		// run on main thread to update UI
+		MainThread.BeginInvokeOnMainThread(async () =>
+		{
+             try
+				{
+					// advance to next in queue
+					if (_currentQueueIndex + 1 < PlaybackQueue.Count)
+					{
+						var next = PlaybackQueue[_currentQueueIndex + 1];
+						await PlaySongAsync(next);
+						// update NextSong after starting next
+						UpdateNextSong();
+					}
+					else
+					{
+						// no more songs
+						IsPlaying = false;
+						NextSong = null;
+					}
+				}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"AudioService_PlaybackEnded error: {ex}");
+			}
+		});
 	}
 
 	public Task InitializeAsync()
@@ -142,10 +229,10 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 
 		if (songsFromDb.Count == 0)
 		{
-			await _databaseService.SaveSongAsync(new Song { Title = "Epic Beats", Artist = "DJ MAUI", FileName = "epic.mp3", IsFavorite = false });
-			await _databaseService.SaveSongAsync(new Song { Title = "Lo-Fi Study", Artist = "Chill Coder", FileName = "lofi.mp3", IsFavorite = false });
+			
 			await _databaseService.SaveSongAsync(new Song { Title = "Kui rebeneb taevas", Artist = "Metsatöll", FileName = "Metsatoll-Kui_rebeneb_taevas.mp3", IsFavorite = false });
 			await _databaseService.SaveSongAsync(new Song { Title = "Nothing Else Matters", Artist = "Metallica", FileName = "Metallica - Nothing Else Matters - Remastered 2021.mp3", IsFavorite = false });
+			await _databaseService.SaveSongAsync(new Song { Title = "Metallica - The Unforgiven - From James' Riff Tapes II", Artist = "Metallica", FileName = "Metallica - The Unforgiven - From James' Riff Tapes II.mp3", IsFavorite = false });
 			songsFromDb = await _databaseService.GetSongsAsync();
 		}
 
@@ -162,7 +249,7 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 
 		try
 		{
-			// 1. Receive the tuple data containing both Path and Title
+            // 1. Receive the tuple data containing Path, Title and Artist
 			var files = await _audioScanner.ScanAsync();
 			if (files == null || files.Count == 0)
 			{
@@ -173,19 +260,23 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 			var existing = await _databaseService.GetSongsAsync();
 			int addedCount = 0;
 
-			// 2. Loop through the paired data structures
+            // 2. Loop through the returned tuples
 			foreach (var item in files)
 			{
+				// item is (Path, Title, Artist)
+				var path = item.Path;
+				var title = item.Title;
+				var artist = item.Artist;
+
 				// Skip if this exact URI path is already stored in the DB
-				if (existing.Exists(s => s.FileName == item.Path))
+				if (existing.Exists(s => s.FileName == path))
 					continue;
 
-				// 💡 Use the true media title fetched from the Android MediaStore query block
 				var song = new Song
 				{
-					Title = string.IsNullOrWhiteSpace(item.Title) ? "Tundmatu lugu" : item.Title,
-					Artist = "Unknown",
-					FileName = item.Path, // Playable content:// path string
+					Title = string.IsNullOrWhiteSpace(title) ? "Tundmatu lugu" : title,
+					Artist = string.IsNullOrWhiteSpace(artist) ? "Unknown" : artist,
+					FileName = path, // Playable content:// path string or local path
 					IsFavorite = false,
 					IsHidden = false
 				};
@@ -261,11 +352,40 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 				return;
 			}
 
+			// --- NEW: Read ID3 Metadata using TagLibSharp ---
+			string parsedTitle = string.Empty;
+			string parsedArtist = string.Empty;
+
+			try
+			{
+				using (var tfile = TagLib.File.Create(localDestinationPath))
+				{
+					parsedTitle = tfile.Tag.Title;
+					// FirstArtists extracts the first primary artist from the performers array
+					parsedArtist = tfile.Tag.FirstArtist;
+				}
+			}
+			catch (Exception tagEx)
+			{
+				System.Diagnostics.Debug.WriteLine($"Metadata read fallback: {tagEx.Message}");
+			}
+
+			// Fallback to filename if metadata tags are empty or missing
+			if (string.IsNullOrWhiteSpace(parsedTitle))
+			{
+				parsedTitle = Path.GetFileNameWithoutExtension(result.FileName) ?? "Tundmatu lugu";
+			}
+			if (string.IsNullOrWhiteSpace(parsedArtist))
+			{
+				parsedArtist = "Unknown";
+			}
+			// ------------------------------------------------
+
 			var song = new Song
 			{
-				Title = Path.GetFileNameWithoutExtension(result.FileName) ?? "Tundmatu lugu",
-				Artist = "Unknown",
-				FileName = localDestinationPath, // Now it points to a stable local file path
+				Title = parsedTitle,
+				Artist = parsedArtist,
+				FileName = localDestinationPath, // Points to a stable local file path
 				IsFavorite = false,
 				IsHidden = false
 			};
@@ -318,6 +438,8 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 		{
 			if (CurrentSong != null)
 			{
+				// set UI to playing immediately for responsive feedback
+                IsPlaying = true;
 				await _audioService.PlayAsync(CurrentSong.FileName);
 				IsPlaying = _audioService.IsPlaying;
 			}
@@ -326,8 +448,67 @@ public class AudioPlayerViewModel : INotifyPropertyChanged
 
 	private async Task PlaySongAsync(Song? song)
 	{
-		if (song == null) return; CurrentSong = song; if (!PlaybackQueue.Contains(song)) PlaybackQueue.Add(song); await _audioService.PlayAsync(song.FileName); IsPlaying = _audioService.IsPlaying; await Task.CompletedTask;
+		if (song == null)
+			return;
+
+		CurrentSong = song;
+
+		if (!PlaybackQueue.Contains(song))
+			PlaybackQueue.Add(song);
+
+		_currentQueueIndex = PlaybackQueue.IndexOf(song);
+
+		await _audioService.PlayAsync(song.FileName);
+		IsPlaying = _audioService.IsPlaying;
+		UpdateNextSong();
 	}
-	private async Task ToggleFavoriteAsync(Song? song) { if (song == null) return; song.IsFavorite = !song.IsFavorite; await _databaseService.SaveSongAsync(song); await LoadMusicLibraryAsync(); }
+
+	private async Task RemoveFromQueueAsync(Song? song)
+	{
+		if (song == null) return;
+		if (PlaybackQueue.Contains(song))
+			PlaybackQueue.Remove(song);
+		// If removed song was the current one, clear CurrentSong
+		if (CurrentSong == song)
+		{
+			CurrentSong = null;
+			_audioService.Stop();
+			IsPlaying = false;
+		}
+		await Task.CompletedTask;
+	}
+
+	private async Task ClearQueueAsync()
+	{
+		PlaybackQueue.Clear();
+		CurrentSong = null;
+		_audioService.Stop();
+		IsPlaying = false;
+		await Task.CompletedTask;
+	}
+
+	private async Task PlayNextAsync()
+	{
+		if (PlaybackQueue.Count == 0) return;
+		int nextIndex = _currentQueueIndex + 1;
+		if (nextIndex >= PlaybackQueue.Count) return;
+		await PlaySongAsync(PlaybackQueue[nextIndex]);
+	}
+
+	private async Task PlayPreviousAsync()
+	{
+		if (PlaybackQueue.Count == 0) return;
+		int prevIndex = _currentQueueIndex - 1;
+		if (prevIndex < 0) return;
+		await PlaySongAsync(PlaybackQueue[prevIndex]);
+	}
+
+	private async Task ToggleFavoriteAsync(Song? song)
+	{
+		if (song == null) return;
+		song.IsFavorite = !song.IsFavorite;
+		await _databaseService.SaveSongAsync(song);
+		await LoadMusicLibraryAsync();
+	}
 	protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

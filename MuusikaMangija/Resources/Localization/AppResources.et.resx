@@ -118,78 +118,78 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ThemeTitle" xml:space="preserve">
-    <value>theme</value>
+    <value>Teema</value>
   </data>
   <data name="LanguageTitle" xml:space="preserve">
-    <value>Language</value>
+    <value>Keel</value>
   </data>
   <data name="AppInfo" xml:space="preserve">
-    <value>App info</value>
+    <value>Rakenduse teave</value>
   </data>
   <data name="Menu_Add" xml:space="preserve">
-    <value>add</value>
+    <value>Lisa</value>
   </data>
   <data name="Menu_AddPlay" xml:space="preserve">
-    <value>add &amp; play</value>
+    <value>Lisa ja mängi</value>
   </data>
   <data name="Menu_Hide" xml:space="preserve">
-    <value>hide</value>
+    <value>Peida laul</value>
   </data>
   <data name="Button_ClearQueue" xml:space="preserve">
-    <value>Clear</value>
+    <value>Puhasta</value>
   </data>
   <data name="Action_Cancel" xml:space="preserve">
-    <value>Cancel</value>
+    <value>Tühista</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Muuda</value>
+  </data>
+  <data name="ResetSettings" xml:space="preserve">
+    <value>Taasta</value>
+  </data>
+  <data name="ConfirmReset" xml:space="preserve">
+    <value>Taasta kõik seaded?</value>
+  </data>
+  <data name="SettingsResetDone" xml:space="preserve">
+    <value>Seaded taastatud.</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Jah</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>Ei</value>
   </data>
   <data name="Play" xml:space="preserve">
-    <value>Play</value>
+    <value>Mängi</value>
   </data>
   <data name="Pause" xml:space="preserve">
-    <value>Pause</value>
+    <value>Peata</value>
   </data>
   <data name="NextSongLabel" xml:space="preserve">
-    <value>Next song: {0}</value>
+    <value>Järgmine lugu: {0}</value>
   </data>
   <data name="ScanDevice" xml:space="preserve">
-    <value>Scan Device</value>
+    <value>Skaneeri seadet</value>
   </data>
   <data name="Hidden" xml:space="preserve">
-    <value>Hidden</value>
+    <value>Peidetud</value>
   </data>
   <data name="ChooseFileManually" xml:space="preserve">
-    <value>Choose File Manually</value>
+    <value>Vali fail</value>
   </data>
   <data name="Language_Estonian" xml:space="preserve">
-    <value>Estonian</value>
+    <value>Eesti</value>
   </data>
   <data name="Language_English" xml:space="preserve">
     <value>English</value>
   </data>
   <data name="Language_Russian" xml:space="preserve">
-    <value>Russian</value>
+    <value>Русский</value>
   </data>
   <data name="SongNext" xml:space="preserve">
-    <value>Next</value>
+    <value>Järgmine</value>
   </data>
   <data name="SongPrevious" xml:space="preserve">
-    <value>Previous</value>
-  </data>
-  <data name="Edit" xml:space="preserve">
-    <value>Edit</value>
-  </data>
-  <data name="ResetSettings" xml:space="preserve">
-    <value>Reset</value>
-  </data>
-  <data name="ConfirmReset" xml:space="preserve">
-    <value>Reset all settings?</value>
-  </data>
-  <data name="SettingsResetDone" xml:space="preserve">
-    <value>Settings reset.</value>
-  </data>
-  <data name="Yes" xml:space="preserve">
-    <value>Yes</value>
-  </data>
-  <data name="No" xml:space="preserve">
-    <value>No</value>
+    <value>Eelmine</value>
   </data>
 </root>

@@ -2,6 +2,7 @@ using System;
 using Microsoft.Maui.Controls;
 using MuusikaMangija.ViewModels;
 using MuusikaMangija.Models;
+using MuusikaMangija.Services;
 
 namespace MuusikaMangija.Views;
 
@@ -11,6 +12,62 @@ public partial class AudioPlayerPage : ContentPage
 	{
 		InitializeComponent();
 		BindingContext = viewModel;
+	}
+
+	// Handle song tap: animate and play
+	private async void OnSongTapped(object sender, EventArgs e)
+	{
+		try
+		{
+			if (sender is Border border && border.BindingContext is Song song && BindingContext is AudioPlayerViewModel vm)
+			{
+				// simple scale animation for feedback
+				await border.ScaleTo(0.97, 60);
+				await border.ScaleTo(1.0, 120, Easing.SpringOut);
+
+				// play the song (PlaySongCommand)
+				if (vm.PlaySongCommand.CanExecute(song))
+					vm.PlaySongCommand.Execute(song);
+			}
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"OnSongTapped error: {ex}");
+		}
+	}
+
+	// Menu button tapped on an item — show ActionSheet with options
+	private async void OnMenuClicked(object sender, EventArgs e)
+	{
+		try
+		{
+			if (sender is Button btn && btn.CommandParameter is Song song && BindingContext is AudioPlayerViewModel vm)
+			{
+                var add = LocalizationManager.Instance["Menu_Add"];
+				var addPlay = LocalizationManager.Instance["Menu_AddPlay"];
+				var hide = LocalizationManager.Instance["Menu_Hide"];
+				var cancel = LocalizationManager.Instance["Action_Cancel"];
+
+				var action = await DisplayActionSheet(song.Title, cancel, null, add, addPlay, hide);
+				if (action == add)
+				{
+					if (vm.AddToQueueCommand.CanExecute(song)) vm.AddToQueueCommand.Execute(song);
+				}
+				else if (action == addPlay)
+				{
+					if (vm.AddToQueueCommand.CanExecute(song)) vm.AddToQueueCommand.Execute(song);
+					if (vm.PlaySongCommand.CanExecute(song)) vm.PlaySongCommand.Execute(song);
+				}
+				else if (action == hide)
+				{
+					if (vm.HideSongCommand.CanExecute(song)) vm.HideSongCommand.Execute(song);
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"OnMenuClicked error: {ex}");
+		}
 	}
 
 	private async void OnHiddenClicked(object sender, EventArgs e)
@@ -99,62 +156,56 @@ public partial class AudioPlayerPage : ContentPage
 	// Drag starting from each item Border; sender is the Border in the DataTemplate
 	void OnDragStarting(object sender, DragStartingEventArgs e)
 	{
-		try
+		if (sender is BindableObject bo && bo.BindingContext is Song song)
 		{
-			if (sender is BindableObject bo && bo.BindingContext is Song song && BindingContext is AudioPlayerViewModel vm)
-			{
-				// store drag in VM (fallback for platforms that don't propagate DataPackage)
-				if (vm.DragStartingCommand.CanExecute(song))
-					vm.DragStartingCommand.Execute(song);
+			System.Diagnostics.Debug.WriteLine($"Dragging: {song.Title}");
 
-                // also set payload so DropEventArgs can read it
-				try
-				{
-					if (e.Data?.Properties != null)
-						e.Data.Properties["SongId"] = song.Id;
-				}
-				catch { }
-			}
-		}
-		catch (Exception ex)
-		{
-			System.Diagnostics.Debug.WriteLine($"OnDragStarting error: {ex}");
+			if (BindingContext is AudioPlayerViewModel vm)
+				vm.DragStartingCommand.Execute(song);
 		}
 	}
-
 	// Drop handler for the drop target Border
 	void OnDrop(object sender, DropEventArgs e)
 	{
-		try
-		{
-			if (BindingContext is AudioPlayerViewModel vm)
-			{
-				// Try read text payload (song id)
-                try
-				{
-					if (e.Data?.Properties != null && e.Data.Properties.TryGetValue("SongId", out var val))
-					{
-						if (val != null && int.TryParse(val.ToString(), out var id))
-						{
-							var song = vm.AllSongs.FirstOrDefault(s => s.Id == id);
-							if (song != null)
-							{
-								vm.PlaybackQueue.Add(song);
-								return;
-							}
-						}
-					}
-				}
-				catch { }
+		System.Diagnostics.Debug.WriteLine("DROP DETECTED");
 
-				// fallback: call VM.DropCommand which uses the stored _draggedSong
-				if (vm.DropCommand.CanExecute(null))
-					vm.DropCommand.Execute(null);
+		if (BindingContext is AudioPlayerViewModel vm)
+		{
+			vm.DropCommand.Execute(null);
+		}
+	}
+
+	private Song? _queueDraggedSong;
+
+	void OnQueueDragStarting(object sender, DragStartingEventArgs e)
+	{
+		if (sender is BindableObject bo &&
+			bo.BindingContext is Song song)
+		{
+			_queueDraggedSong = song;
+		}
+	}
+
+	void OnQueueDrop(object sender, DropEventArgs e)
+	{
+		if (sender is BindableObject bo &&
+			bo.BindingContext is Song targetSong &&
+			BindingContext is AudioPlayerViewModel vm &&
+			_queueDraggedSong != null)
+		{
+			var oldIndex = vm.PlaybackQueue.IndexOf(_queueDraggedSong);
+			var newIndex = vm.PlaybackQueue.IndexOf(targetSong);
+
+			if (oldIndex >= 0 && newIndex >= 0)
+			{
+				vm.PlaybackQueue.Move(oldIndex, newIndex);
 			}
 		}
-		catch (Exception ex)
-		{
-			System.Diagnostics.Debug.WriteLine($"OnDrop error: {ex}");
-		}
+	}
+
+	private async void OnSettingsClicked(object sender, EventArgs e)
+	{
+		// Make sure your application uses a NavigationPage structure to push pages
+		await Navigation.PushAsync(new SettingsPage());
 	}
 }
