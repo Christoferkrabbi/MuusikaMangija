@@ -16,7 +16,6 @@ namespace MuusikaMangija.Services
 			{
 				var uri = MediaStore.Audio.Media.ExternalContentUri;
 
-				// 💡 Query BOTH the ID and the real Media Title string from the phone
                  string[] projection = new[]
 				{
 					MediaStore.Audio.AudioColumns.Id,
@@ -40,7 +39,6 @@ namespace MuusikaMangija.Services
 							string artist = string.Empty;
 							try { artist = cursor.GetString(artistIndex); } catch { artist = ""; }
 
-							// Generate the valid content URI string
 							var contentUri = ContentUris.WithAppendedId(MediaStore.Audio.Media.ExternalContentUri, id);
 
                             if (contentUri != null && !string.IsNullOrWhiteSpace(realTitle))

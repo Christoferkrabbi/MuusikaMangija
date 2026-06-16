@@ -28,7 +28,7 @@ public class DatabaseService
 		var files = Directory.GetFiles(userFolder, "*.mp3");
 		foreach (var f in files)
 		{
-			// check if already exists (match by full path)
+			// check if already exists 
 			var exists = await _database.Table<Song>().Where(s => s.FileName == f).FirstOrDefaultAsync();
 			if (exists == null)
 			{

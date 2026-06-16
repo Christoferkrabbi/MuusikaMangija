@@ -16,7 +16,7 @@ public class AudioService : IDisposable
     private bool _stopRequested = false;
     private System.Threading.CancellationTokenSource? _monitorCts;
 
-    // Raised when playback naturally finishes (not when paused or stopped by user)
+    // Raised when playback naturally finishes
     public event EventHandler? PlaybackEnded;
 
     public bool IsPlaying => _player?.IsPlaying ?? false;
@@ -25,7 +25,6 @@ public class AudioService : IDisposable
     public async Task PlayAsync(string filePath)
     {
         System.Diagnostics.Debug.WriteLine($"AudioService.PlayAsync called for: {filePath}");
-        // If player already open for same file and is paused, resume instead of recreating
         try
         {
             if (!string.IsNullOrEmpty(_currentFilePath) && _currentFilePath == filePath && _player != null && !_player.IsPlaying)
@@ -36,7 +35,6 @@ public class AudioService : IDisposable
         }
         catch { }
 
-        // otherwise create new player
         Stop();
 
         try
@@ -51,7 +49,6 @@ public class AudioService : IDisposable
                 _player = AudioManager.Current.CreatePlayer(_stream);
                 _player.Play();
                 _currentFilePath = filePath;
-                // start monitor
                 StartPlaybackMonitor();
                 return;
             }
@@ -68,7 +65,7 @@ public class AudioService : IDisposable
                     using var istream = resolver.OpenInputStream(uri);
                     if (istream != null)
                     {
-                        // copy to cache with a unique name
+                        // copy with a unique name
                         var cacheDir = FileSystem.CacheDirectory;
                         var tmpName = $"audiotmp_{Guid.NewGuid():N}.tmp";
                         var tmpPath = Path.Combine(cacheDir, tmpName);
@@ -83,7 +80,6 @@ public class AudioService : IDisposable
                         _player.Play();
                         _currentFilePath = filePath; // original content URI
                         _tempCopiedPath = tmpPath; // temp copy we should clean up on Stop
-                        // start monitor
                         StartPlaybackMonitor();
                         return;
                     }
@@ -108,7 +104,6 @@ public class AudioService : IDisposable
                         _player = AudioManager.Current.CreatePlayer(_stream);
                         _player.Play();
                         _currentFilePath = filename;
-                        // start monitor
                         StartPlaybackMonitor();
                         return;
                     }
@@ -162,7 +157,6 @@ public class AudioService : IDisposable
             _stream?.Dispose();
             _stream = null;
             _currentFilePath = null;
-            // delete any temporary copied file
             try
             {
                 if (!string.IsNullOrEmpty(_tempCopiedPath) && File.Exists(_tempCopiedPath))

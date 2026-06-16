@@ -28,7 +28,7 @@ public class DefaultAudioScanner : IAudioScanner
 			if (string.IsNullOrWhiteSpace(cleanTitle))
 				cleanTitle = "Tundmatu lugu";
 
-			// Optionally split title like "Artist - Title"
+			// Optionally split titles like "Artist - Title"
 			if (cleanTitle.Contains(" - "))
 			{
 				var parts = cleanTitle.Split(new[] { " - " }, 2, System.StringSplitOptions.None);

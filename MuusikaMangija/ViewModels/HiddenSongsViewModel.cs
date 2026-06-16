@@ -111,7 +111,6 @@ public class HiddenSongsViewModel : INotifyPropertyChanged
                 }
 
 #if ANDROID
-                // If still not deleted and running on Android, try MediaStore lookup by DATA path
                 if (!deleted)
                 {
                     try

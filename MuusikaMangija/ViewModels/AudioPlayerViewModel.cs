@@ -154,7 +154,6 @@ private void UpdateNextSong()
 
 		UpdateNextSong();
 
-		// subscribe to audio service playback end
 		_audioService.PlaybackEnded += AudioService_PlaybackEnded;
 	}
 
